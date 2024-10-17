@@ -1,3 +1,4 @@
+const { log } = require("console");
 const express = require("express");
 const http = require("http");
 const app = express();
@@ -25,6 +26,9 @@ io.on("connection", (socket) => {
         const user = users.find(user => user.socketId === socket.id);
         if (user) {
             users = users.filter(u => u.socketId !== socket.id);
+            console.log('====================================');
+            console.log('Users:', user);
+            console.log('====================================');
             socket.to(user.room).emit("userDisconnected", { id: socket.id, name: user.name });
             console.log('User disconnected:', user.name);
         }
@@ -32,11 +36,8 @@ io.on("connection", (socket) => {
 
     socket.on("callUser", (data) => {
         const userToCall = users.find(user => user.name === data.userToCall);
-        const roomName = `room-${data.from}-${userToCall.socketId}`;
+        const roomName = `room-${data.from}-${userToCall?.socketId}`;
         socket.join(roomName);
-        console.log('====================================');
-        console.log('Room: call', roomName);
-        console.log('====================================');
         if (userToCall) {
             userToCall.room = roomName; // บันทึกห้องให้กับผู้ใช้ที่ถูกโทร
             io.to(userToCall.socketId).emit("callUser", { signal: data.signalData, from: data.from, name: data.name });
@@ -47,10 +48,8 @@ io.on("connection", (socket) => {
     });
 
     socket.on("answerCall", (data) => {
+        
         const roomName = `room-${data.to}-${data.from}`;
-        console.log('====================================');
-        console.log('Room: anw', roomName);
-        console.log('====================================');
         socket.join(roomName);
         
         const user = users.find(user => user.socketId === data.to);
@@ -64,13 +63,13 @@ io.on("connection", (socket) => {
         io.to(data.to).emit("callAccepted", { signal: data.signal, name: data.name });
     });
 
-    socket.on("callEnded", () => {
+    socket.on("callEnded", (id) => {
+        const userroom = users.find(user => user.socketId === id)?.room 
+        users.filter(user => user.room === userroom).map(user => user.room = null);
         const rooms = Array.from(socket.rooms);
-        if (rooms.length > 1) {
-            const roomName = rooms[1];
-            socket.to(roomName).emit("callEnded");
-            socket.leave(roomName);
-        }
+        const room = rooms.find(room => room  == userroom);
+        socket.to(room).emit("callEnded");
+        socket.leave(room);
     });
 });
 

@@ -14,62 +14,60 @@ const PORT = process.env.PORT || 5000;
 let users = [];
 
 io.on("connection", (socket) => {
+    const socketId = socket.id;
     socket.emit("me", socket.id);
 
     socket.on("username", (name, id) => {
-        users.push({ id, name, socketId: socket.id, room: null }); // เพิ่ม room เป็น null
+        users.push({ socketId, name, socketId: socket.id, room: null });
         io.emit("allUsers", users);
         console.log('Users:', users);
     });
 
     socket.on("disconnect", () => {
-        const user = users.find(user => user.socketId === socket.id);
+        const user = users.filter(user => user.socketId === socket.id).pop();
         if (user) {
-            users = users.filter(u => u.socketId !== socket.id);
-            console.log('====================================');
-            console.log('Users:', user);
-            console.log('====================================');
             socket.to(user.room).emit("userDisconnected", { id: socket.id, name: user.name });
             console.log('User disconnected:', user.name);
+            console.log('Users:', users);
         }
     });
 
     socket.on("callUser", (data) => {
-        const userToCall = users.find(user => user.name === data.userToCall);
+        const userToCall = users.filter(user => user.name === data.userToCall).pop();
         const roomName = `room-${data.from}-${userToCall?.socketId}`;
         socket.join(roomName);
         if (userToCall) {
-            userToCall.room = roomName; // บันทึกห้องให้กับผู้ใช้ที่ถูกโทร
+            userToCall.room = roomName;
             io.to(userToCall.socketId).emit("callUser", { signal: data.signalData, from: data.from, name: data.name });
         }
-        console.log('====================================');
-        console.log('User:call', users);
-        console.log('====================================');
     });
 
     socket.on("answerCall", (data) => {
-        
         const roomName = `room-${data.to}-${data.from}`;
         socket.join(roomName);
-        
         const user = users.find(user => user.socketId === data.to);
         if (user) {
-            user.room = roomName; // บันทึกห้องให้กับผู้ใช้ที่รับสาย
+            user.room = roomName; 
         }
-        console.log('====================================');
-        console.log('User:anw', users);
-        console.log('====================================');
-        
         io.to(data.to).emit("callAccepted", { signal: data.signal, name: data.name });
     });
 
     socket.on("callEnded", (id) => {
-        const userroom = users.find(user => user.socketId === id)?.room 
+        const userroom = users.filter(user => user.socketId === id).pop()?.room;
         users.filter(user => user.room === userroom).map(user => user.room = null);
         const rooms = Array.from(socket.rooms);
-        const room = rooms.find(room => room  == userroom);
+        const room = rooms.find(room => room === userroom);
         socket.to(room).emit("callEnded");
         socket.leave(room);
+    });
+
+    // New event for toggling audio
+    socket.on("toggleAudio", ({ userId, status }) => {
+        // Broadcast the audio status change to all other users in the same room
+        const user = users.find(user => user.socketId === userId);
+        if (user && user.room) {
+            socket.to(user.room).emit("audioStatus", { userId, status });
+        }
     });
 });
 

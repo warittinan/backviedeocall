@@ -62,11 +62,14 @@ io.on("connection", (socket) => {
     });
 
     // New event for toggling audio
-    socket.on("toggleAudio", ({ userId, status }) => {
-        // Broadcast the audio status change to all other users in the same room
-        const user = users.find(user => user.socketId === userId);
+    socket.on("togglevideo", (data) => {
+        console.log('User ID:',data.socketId);
+        const user = users.filter(user => user.socketId === data.socketId).pop()
+        const username = user?.name;
+        const status = data.status;
+        // console.log("room",user.room);
         if (user && user.room) {
-            socket.to(user.room).emit("audioStatus", { userId, status });
+            socket.to(user.room).emit("videoStatus", { username,status  });
         }
     });
 });

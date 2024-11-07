@@ -57,7 +57,7 @@ io.on("connection", (socket) => {
         users.filter(user => user.room === userroom).map(user => user.room = null);
         const rooms = Array.from(socket.rooms);
         const room = rooms.find(room => room === userroom);
-        socket.to(room).emit("callEnded");
+        socket.to(room).emit("callUserEnded");
         socket.leave(room);
     });
 

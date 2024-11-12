@@ -63,13 +63,21 @@ io.on("connection", (socket) => {
 
     // New event for toggling audio
     socket.on("togglevideo", (data) => {
-        console.log('User ID:',data.socketId);
         const user = users.filter(user => user.socketId === data.socketId).pop()
         const username = user?.name;
         const status = data.status;
         // console.log("room",user.room);
         if (user && user.room) {
             socket.to(user.room).emit("videoStatus", { username,status  });
+        }
+    });
+    socket.on("toggleaudio", (data) => {
+        const user = users.filter(user => user.socketId === data.socketId).pop()
+        const username = user?.name;
+        const status = data.status;
+        // console.log("room",user.room);
+        if (user && user.room) {
+            socket.to(user.room).emit("audioStatus", { username,status  });
         }
     });
 });

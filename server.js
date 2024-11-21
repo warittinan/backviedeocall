@@ -1,4 +1,5 @@
 const { log } = require("console");
+const e = require("express");
 const express = require("express");
 const http = require("http");
 const app = express();
@@ -16,7 +17,6 @@ let users = [];
 io.on("connection", (socket) => {
     const socketId = socket.id;
     socket.emit("me", socket.id);
-
     socket.on("username", (name, id) => {
         users.push({ socketId, name, socketId: socket.id, room: null });
         io.emit("allUsers", users);
@@ -28,8 +28,10 @@ io.on("connection", (socket) => {
         if (user) {
             socket.to(user.room).emit("userDisconnected", { id: socket.id, name: user.name });
             console.log('User disconnected:', user.name);
+            users = users.filter(user => user.socketId !== socket.id);
             console.log('Users:', users);
         }
+
     });
 
     socket.on("callUser", (data) => {
@@ -39,7 +41,10 @@ io.on("connection", (socket) => {
         if (userToCall) {
             userToCall.room = roomName;
             io.to(userToCall.socketId).emit("callUser", { signal: data.signalData, from: data.from, name: data.name });
+        }else{
+            io.to(socketId).emit("callUserError", { error: "The user is not currently logged in." });
         }
+        
     });
 
     socket.on("answerCall", (data) => {

@@ -1,5 +1,4 @@
 const { log } = require("console");
-const e = require("express");
 const express = require("express");
 const http = require("http");
 const app = express();
@@ -13,7 +12,9 @@ const io = require("socket.io")(server, {
 
 const PORT = process.env.PORT || 5000;
 let users = [];
-
+app.get("/", (req, res) => {
+    res.send("server is running");
+});
 io.on("connection", (socket) => {
     const socketId = socket.id;
     socket.emit("me", socket.id);
@@ -40,7 +41,7 @@ io.on("connection", (socket) => {
         socket.join(roomName);
         if (userToCall) {
             userToCall.room = roomName;
-            io.to(userToCall.socketId).emit("callUser", { signal: data.signalData, from: data.from, name: data.name });
+            io.to(userToCall.socketId).emit("callUser", { signal: data.signalData, from: data.from, name: data.name ,dataappointment:data.dataappointment});
         }else{
             io.to(socketId).emit("callUserError", { error: "The user is not currently logged in." });
         }
@@ -80,6 +81,7 @@ io.on("connection", (socket) => {
         const user = users.filter(user => user.socketId === data.socketId).pop()
         const username = user?.name;
         const status = data.status;
+
         // console.log("room",user.room);
         if (user && user.room) {
             socket.to(user.room).emit("audioStatus", { username,status  });

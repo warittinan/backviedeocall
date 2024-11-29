@@ -1,18 +1,26 @@
 const { log } = require("console");
 const express = require("express");
+const cors = require("cors");
 const http = require("http");
 const app = express();
 const server = http.createServer(app);
+
+app.use(cors({
+    origin: "*", // Allow all origins or specify specific ones
+    methods: ["GET", "POST"]
+}));
 const io = require("socket.io")(server, {
     cors: {
+        // origin: ["http://localhost:3000","http://capstone24.sit.kmutt.ac.th/ssa2/"],
         origin: "*",
         methods: ["GET", "POST"]
-    }
-});
+    },
+    path: "/ssa2/meeting/"
 
+});
 const PORT = process.env.PORT || 5000;
 let users = [];
-app.get("/", (req, res) => {
+app.get("/meeting", (req, res) => {
     res.send("server is running");
 });
 io.on("connection", (socket) => {

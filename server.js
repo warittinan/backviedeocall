@@ -15,11 +15,13 @@ const io = require("socket.io")(server, {
         origin: "*",
         methods: ["GET", "POST"]
     },
-    path: "/ssa2/meeting/"
+    path: "/ssa2-meeting/",
+    // forceNew: true
 
 });
 const PORT = process.env.PORT || 5000;
 let users = [];
+
 app.get("/meeting", (req, res) => {
     res.send("server is running");
 });

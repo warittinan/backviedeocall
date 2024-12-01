@@ -27,7 +27,7 @@ app.get("/meeting", (req, res) => {
 });
 io.on("connection", (socket) => {
     const socketId = socket.id;
-    socket.emit("me", socket.id);
+    socket.emit("id", socket.id);
     socket.on("username", (name, id) => {
         users.push({ socketId, name, socketId: socket.id, room: null });
         io.emit("allUsers", users);

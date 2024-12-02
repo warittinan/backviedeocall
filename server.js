@@ -15,7 +15,7 @@ const io = require("socket.io")(server, {
         origin: "*",
         methods: ["GET", "POST"]
     },
-    path: "/ssa2-meeting/",
+    path: "/ssa2-socket/",
     // forceNew: true
 
 });
@@ -26,6 +26,10 @@ app.get("/meeting", (req, res) => {
     res.send("server is running");
 });
 io.on("connection", (socket) => {
+    console.log('====================================');
+    console.log('User connected:', socket.id);
+    console.log('====================================');
+    
     const socketId = socket.id;
     socket.emit("id", socket.id);
     socket.on("username", (name, id) => {
